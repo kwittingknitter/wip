@@ -1,0 +1,71 @@
+---
+title: "Preliminary analysis of KorNLI dataset"
+format: html
+editor: visual
+---
+
+## Dataset
+
+KorNLI, a Korean natural language inference (NLI) dataset, is derived from the Stanford NLI (SNLI), MultiGenre NLI (MNLI), and Cross-lingual NLI (XNLI) datasets.
+
+The dataset consists of pairs of sentences–a premise `sentence1` and a hypothesis `sentence2`–and a label for the relation between them as one of entailment, contradiction, or neutral.
+
+#### About the dataset
+
+The training data from these English datasets were machine translated, as well as XNLI's development and test data. The BERT-translated evaluation set (development and test data) were then manually edited and proofread by professional translators.
+
+Training data consists of 942,854 examples. Evaluation data consists of 7,500 examples.
+
+For more information, refer to its [paper](https://arxiv.org/pdf/2004.03289), "KorNLI and KorSTS: New Benchmark Datasets for Korean Natural Language Understanding."
+
+## Loading and cleaning the data
+
+```{r}
+library(conflicted)
+library(tidyverse)
+```
+
+```{r}
+dev_url <- 'https://raw.githubusercontent.com/kakaobrain/kor-nlu-datasets/refs/heads/master/KorNLI/xnli.dev.ko.tsv'
+nli_dev <- read_tsv(dev_url, col_names = TRUE)
+```
+
+```{r}
+problems(nli_dev)
+```
+
+```{r}
+test_url <- 'https://raw.githubusercontent.com/kakaobrain/kor-nlu-datasets/refs/heads/master/KorNLI/xnli.test.ko.tsv'
+nli_test <- read_tsv(test_url, col_names = TRUE)
+```
+
+```{r}
+problems(nli_test)
+```
+
+```{r}
+nli_dev_clean <- nli_dev %>% drop_na()
+nli_test_clean <- nli_test %>% drop_na()
+```
+
+```{r}
+eval_df <- rbind(nli_dev_clean, nli_test_clean)
+```
+
+## Preliminary analysis
+
+This preliminary analysis looks at number of occurrences of *amwu*, Korean 'any' in the evaluation set.
+
+```{r}
+amwu_eval_df <- eval_df %>%
+  dplyr::filter(grepl("아무", sentence1) | grepl("아무", sentence2))
+```
+
+```{r nominal-bar-label}
+amwu_eval_df %>%
+  ggplot(aes(x = gold_label)) +
+  geom_bar() +
+  labs(x = "Label", y = "Count") +
+  scale_y_continuous(labels = scales::comma) +
+  theme_classic()
+```
